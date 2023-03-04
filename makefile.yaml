@@ -1,0 +1,46 @@
+-
+  name: fetching latest artifact from nexus then creating dockerfile and docker-compose file and building  dockerfile 
+  hosts: managers 
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks: 
+   - name: fetching latest artifact from nexus repo
+     shell: 'curl -u admin:07d568 -L  "http://172.31.19.161:8081/service/rest/v1/search/assets/download?sort=version&repository=viraj_RELEASE&maven.groupId=com.example.maven-project&maven.artifactId=maven-project&maven.extension=war" -H "accept: application/json"   --output latest.war'
+     args:
+       chdir: /home/cloud_user/
+   - name: creating dockerfile
+     copy:
+       dest: /home/cloud_user/Dockerfile
+       content: |
+            FROM tomcat:latest
+            WORKDIR /usr/local/tomcat
+            ADD *.war webapps.dist/
+            RUN mv webapps webapps2
+            RUN mv webapps.dist/ webapps
+            CMD ["catalina.sh","run"]
+   - name: building docker image
+     community.docker.docker_image:
+      state: present 
+      name: virajthorat776/javaapp
+      build:
+        path: /home/cloud_user
+        args:
+          listen_port: 8080
+      source: build
+
+   - name: writing docker-compose file
+     copy:
+       dest: /home/cloud_user/docker-compose.yaml
+       content: |
+            version: "3.9"
+
+            services:
+                java_web:
+                    image: virajthorat776/javaapp
+                    ports:
+                       - "8080-8083:8080"
+                    deploy:
+                       replicas: 2
+
+

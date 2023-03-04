@@ -1,0 +1,54 @@
+all:
+  hosts:
+    host1:
+      ansible_host: 172.31.21.9
+    host2:
+      ansible_host: 172.31.24.110
+  children:
+    managers:
+      hosts:
+        host1:
+    workers:
+      hosts:
+        host2:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#all:
+#  children:
+#     managers:
+#        hosts:
+#           172.31.21.9: 
+#     workers:
+#        hosts:
+#           172.31.24.110:
+

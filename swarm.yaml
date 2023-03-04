@@ -1,0 +1,33 @@
+- name: Initializing empty swarm
+  hosts: all
+  become: yes
+  tasks:
+   - name: Init a new swarm with default parameters
+     docker_swarm:
+        state: present
+        advertise_addr: "{{ ansible_host }}"
+     register: result
+     when: inventory_hostname in groups["managers"][0]
+
+   - name: Get join-token for worker nodes
+     set_fact:
+        join_token_worker: '{{ hostvars[groups["managers"][0]].result.swarm_facts.JoinTokens.Worker }}'
+
+   - name: Join workers
+     docker_swarm:
+        state: join
+        join_token: "{{ join_token_worker }}"
+        advertise_addr: "{{ ansible_host }}"
+        remote_addrs: '{{ hostvars[groups["managers"][0]].ansible_host }}'
+     when:
+        - inventory_hostname not in groups["managers"]
+
+   - name: Deploy stack from a compose file
+     docker_stack:
+       state: present
+       name: mystack
+       compose:
+          - /home/cloud_user/docker-compose.yaml
+     when: inventory_hostname in groups["managers"][0]
+
+
